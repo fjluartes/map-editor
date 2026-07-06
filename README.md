@@ -5,9 +5,14 @@
 [Parallel Realities SDL2 tutorial](https://www.parallelrealities.co.uk/tutorials/)
 
 ## SETUP
-- Add CMakeLists.txt from previous projects (my-sdl-shmup)
+- Add CMakeLists.txt from previous projects (e.g. my-shmup-01)
 - Add CMakePresets.json
 - Create build.sh, build.bat
+
+## MAP EDITOR CONTROLS
+`Left Mouse Button` - Place Tile
+`Right Mouse Button` - Remove Tile
+`Space Bar` - Save Map
 
 ## TODO
 - [ ] Tile selection
