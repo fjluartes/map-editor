@@ -2,8 +2,8 @@
 Copyright (C) 2022 Parallel Realities
 */
 
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL_mixer.h>
+#include <SDL_ttf.h>
 
 #include "../common.h"
 

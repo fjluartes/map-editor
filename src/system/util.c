@@ -2,7 +2,7 @@
  * Copyright (C) 2022 Parallel Realities. All rights reserved.
  */
 
-#include <SDL2/SDL_mixer.h>
+#include <SDL_mixer.h>
 #include <sys/stat.h>
 
 #include "../common.h"
