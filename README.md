@@ -10,11 +10,11 @@
 - Create build.sh, build.bat
 
 ## TODO
-- [ ] Simple map editor
 - [ ] Tile selection
 - [ ] Entity selection
 - [ ] Scrolling and picking entities
 - [ ] Expanded UI and minimap
 
 ## DONE
-
+- [x] Simple map editor
+- [x] Project setup
