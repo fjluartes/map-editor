@@ -1,8 +1,11 @@
 @echo off
 setlocal
 
-cmake --preset windows-default
-cmake --build --preset windows-default
+rem cmake --preset windows-msvc
+rem cmake --build --preset windows-msvc
+
+cmake --preset windows-mingw
+cmake --build --preset windows-mingw
 
 if "%~2"=="" (
     echo Usage: %~nx0 {-edit^-|-map} ^<map_name^>
@@ -25,4 +28,5 @@ echo Usage: %~nx0 {-edit^-|-map} ^<map_name^>
 exit /b 1
 
 :run
-build\map-editor.exe "%MODE%" "%MAP_NAME%"
+rem build\msvc\map-editor.exe "%MODE%" "%MAP_NAME%"
+build\mingw\map-editor.exe "%MODE%" "%MAP_NAME%"
