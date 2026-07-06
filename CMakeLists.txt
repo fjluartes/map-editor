@@ -2,7 +2,7 @@ CMake_Minimum_Required (VERSION 3.23)
 Project(
     map-editor
     VERSION 1.0
-    DESCRIPTION "SDL2 Platformer"
+    DESCRIPTION "SDL2 Map Editor"
 )
 
 set(CMAKE_CXX_STANDARD 14)
