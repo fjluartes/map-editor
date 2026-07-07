@@ -39,6 +39,10 @@ static void drawUI(void);
 static void drawTopBar(void);
 static void drawBottomBar(void);
 static char *getTileTypeName(void);
+static void addEntity(void);
+static void removeEntity(void);
+static void cycleEntity(int *i, int dir);
+static void *findExisting(char *typeName);
 
 static SDL_Point   mouseTile;
 static int         currentTile;
@@ -93,6 +97,14 @@ static void addDefaultEntities(void)
 		e = initEntity("player");
 		e->x = 50;
 		e->y = 300;
+
+		e = initEntity("startFlag");
+		e->x = 150;
+		e->y = 300;
+
+		e = initEntity("endFlag");
+		e->x = 250;
+		e->y = 300;
 	}
 }
 
@@ -100,6 +112,15 @@ static void logic(void)
 {
 	mouseTile.x = (app.mouse.x + stage.camera.x) / MAP_TILE_SIZE;
 	mouseTile.y = (app.mouse.y + stage.camera.y) / MAP_TILE_SIZE;
+
+	if (currentEntity != NULL)
+	{
+		currentEntity->x = (int)((app.mouse.x + stage.camera.x) / ENTITY_SPACING);
+		currentEntity->x *= ENTITY_SPACING;
+
+		currentEntity->y = (int)((app.mouse.y + stage.camera.y) / ENTITY_SPACING);
+		currentEntity->y *= ENTITY_SPACING;
+	}
 
 	doMouse();
 
@@ -112,30 +133,86 @@ static void doMouse(void)
 {
 	if (isInsideMap(mouseTile.x, mouseTile.y))
 	{
-		if (app.mouse.buttons[SDL_BUTTON_LEFT])
+		if (mode == MODE_TILES)
 		{
-			stage.map[mouseTile.x][mouseTile.y] = currentTile;
+			if (app.mouse.buttons[SDL_BUTTON_LEFT])
+			{
+				stage.map[mouseTile.x][mouseTile.y] = currentTile;
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_RIGHT])
+			{
+				stage.map[mouseTile.x][mouseTile.y] = 0;
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_X1])
+			{
+				app.mouse.buttons[SDL_BUTTON_X1] = 0;
+
+				cycleTile(&currentTile, -1);
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_X2])
+			{
+				app.mouse.buttons[SDL_BUTTON_X2] = 0;
+
+				cycleTile(&currentTile, 1);
+			}
 		}
 
-		if (app.mouse.buttons[SDL_BUTTON_RIGHT])
+		else if (mode == MODE_ENTITIES)
 		{
-			stage.map[mouseTile.x][mouseTile.y] = 0;
+			if (app.mouse.buttons[SDL_BUTTON_LEFT])
+			{
+				app.mouse.buttons[SDL_BUTTON_LEFT] = 0;
+
+				addEntity();
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_RIGHT])
+			{
+				app.mouse.buttons[SDL_BUTTON_RIGHT] = 0;
+
+				removeEntity();
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_X1])
+			{
+				app.mouse.buttons[SDL_BUTTON_X1] = 0;
+
+				cycleEntity(currentEntityIndex, -1);
+
+				currentEntity = entities[currentEntityIndex];
+			}
+
+			if (app.mouse.buttons[SDL_BUTTON_X2])
+			{
+				app.mouse.buttons[SDL_BUTTON_X2] = 0;
+
+				cycleEntity(currentEntityIndex, 1);
+
+				currentEntity = entities[currentEntityIndex];
+			}
 		}
-
-		if (app.mouse.buttons[SDL_BUTTON_X1])
-		{
-			app.mouse.buttons[SDL_BUTTON_X1] = 0;
-
-			cycleTile(&currentTile, -1);
-		}
-
-		if (app.mouse.buttons[SDL_BUTTON_X2])
-		{
-			app.mouse.buttons[SDL_BUTTON_X2] = 0;
-
-			cycleTile(&currentTile, 1);
-		}
+		
 	}
+}
+
+static void addEntity(void)
+{
+	Entity *e;
+
+	if (currentEntity->editorFlags & EMF_UNIQUE)
+	{
+		e = findExisting(currentEntity->typeName);
+	}
+	else
+	{
+		e = initEntity(currentEntity->typeName);
+	}
+
+	e->x = currentEntity->x;
+	e->y = currentEntity->y;
 }
 
 static void doKeyboard(void)
@@ -157,6 +234,55 @@ static void doKeyboard(void)
 		}
 
 		app.keyboard[SDL_SCANCODE_SPACE] = 0;
+	}
+}
+
+static Entity *findExisting(char *typeName)
+{
+	Entity *e;
+
+	for (e = stage.entityHead.next; e != NULL; e = e->next)
+	{
+		if (strcmp(e->typeName, typeName) == 0)
+		{
+			return e;
+		}
+	}
+
+	return currentEntity;
+}
+
+static void removeEntity(void)
+{
+	Entity *e, *prev;
+
+	prev = &stage.entityHead;
+
+	for (e = stage.entityHead.next; e != NULL; e = e->next)
+	{
+		if (!(e->editorFlags & EMF_REQUIRED) &&
+			collision(app.mouse.x + stage.camera.x, 
+					  app.mouse.y + stage.camera.y, 
+					  1, 1, e->x, e->y, e->w, e->h))
+		{
+			prev->next = e->next;
+
+			if (e == stage.entityTail)
+			{
+				stage.entityTail = prev;
+			}
+
+			if (e->data != NULL)
+			{
+				free(e->data);
+			}
+
+			free(e);
+
+			e = prev;
+		}
+
+		prev = e;
 	}
 }
 
