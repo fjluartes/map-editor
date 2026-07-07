@@ -17,6 +17,14 @@
 #include "../system/text.h"
 #include "editor.h"
 
+#define ENTITY_SPACING 8
+
+enum
+{
+	MODE_TITLES,
+	MODE_ENTITIES
+};
+
 extern App   app;
 extern Stage stage;
 
@@ -37,6 +45,12 @@ static int         currentTile;
 static AtlasImage *tiles[MAX_TILES];
 static AtlasImage *activeObjectArrowTexture;
 static double	   activeObjectArrowBob;
+static Entity 	  *currentEntity;
+static Entit 	 **entities;
+static int         currentEntityIndex;
+static int         totalEntities;
+static int         mode;
+static char       *modeText[] = {"Tiles", "Entities"};
 
 void initEditor(void)
 {
@@ -55,6 +69,12 @@ void initEditor(void)
 	addDefaultEntities();
 
 	currentTile = 1;
+
+	mode = MODE_TILES;
+
+	entities = getEditorEntities(&totalEntities);
+
+	currentEntity = entities[0];
 
 	activeObjectArrowTexture = getAtlasImage("gfx/editor/activeObjectArrow.png", 1);
 
