@@ -321,6 +321,11 @@ static void draw(void)
 {
 	drawBackground();
 
+	if (mode == MODE_ENTITIES)
+	{
+		drawGridLines(ENTITY_SPACING);
+	}
+
 	drawEntities(LAYER_BACKGROUND);
 
 	drawMap(LAYER_BACKGROUND);
@@ -329,15 +334,28 @@ static void draw(void)
 
 	drawMap(LAYER_FOREGROUND);
 
-	drawGridLines(MAP_TILE_SIZE);
+	if (mode == MODE_TILES)
+	{
+		drawGridLines(MAP_TILE_SIZE);
 
-	blitAtlasImage(tiles[currentTile], 
-		(mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
-		(mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 0, SDL_FLIP_NONE);
+		blitAtlasImage(tiles[currentTile], 
+					   (mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
+					   (mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 
+					   0, SDL_FLIP_NONE);
 
-	drawOutlineRect((mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
-		(mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 
-		MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+		drawOutlineRect((mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
+						(mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 
+						MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+	}
+	else if (currentEntity != NULL)
+	{
+		currentEntity->draw(currentEntity);
+
+		drawOutlineRect(currentEntity.x - stage.camera.x, 
+						currentEntity.y - stage.camera.y, 
+						currentEntity->w, currentEntity->h, 255, 255, 0, 255);
+	}
+	
 
 	drawUI();
 }
