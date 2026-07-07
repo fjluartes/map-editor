@@ -234,6 +234,22 @@ static void doKeyboard(void)
 		}
 
 		app.keyboard[SDL_SCANCODE_SPACE] = 0;
+
+		if (app.keyboard[SDL_SCANCODE_1])
+		{
+			app.keyboard[SDL_SCANCODE_1] = 0;
+
+			mode = MODE_TILES;
+		}
+
+		if (app.keyboard[SDL_SCANCODE_2])
+		{
+			app.keyboard[SDL_SCANCODE_2] = 0;
+
+			mode = MODE_ENTITIES;
+
+			currentEntity = entities[currentEntityIndex];
+		}
 	}
 }
 
@@ -283,6 +299,21 @@ static void removeEntity(void)
 		}
 
 		prev = e;
+	}
+}
+
+static void cycleEntity(int *i, int dir)
+{
+	*i = *i + dir;
+
+	if (*i < 0)
+	{
+		*i = totalEntities - 1;
+	}
+
+	if (*i >= totalEntities)
+	{
+		*i = 1;
 	}
 }
 
