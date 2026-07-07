@@ -25,10 +25,13 @@ static void logic(void);
 static void draw(void);
 static void doMouse(void);
 static void doKeyboard(void);
+static void cycleTile(int *i, int dir);
 
 static SDL_Point   mouseTile;
 static int         currentTile;
 static AtlasImage *tiles[MAX_TILES];
+static SDL_Texture *activeObjectArrowTexture;
+static int activeObjectArrowBob;
 
 void initEditor(void)
 {
@@ -47,6 +50,10 @@ void initEditor(void)
 	addDefaultEntities();
 
 	currentTile = 1;
+
+	activeObjectArrowTexture = getAtlasImage("gfx/editor/activeObjectArrow.png");
+
+	activeObjectArrowBob = 0;
 
 	app.delegate.logic = logic;
 	app.delegate.draw = draw;
@@ -72,6 +79,8 @@ static void logic(void)
 	doMouse();
 
 	doKeyboard();
+
+	activeObjectArrowBob += 0.1 * app.deltaTime;
 }
 
 static void doMouse(void)
@@ -87,6 +96,20 @@ static void doMouse(void)
 		{
 			stage.map[mouseTile.x][mouseTile.y] = 0;
 		}
+
+		if (app.mouse.buttons[SDL_BUTTON_X1])
+		{
+			app.mouse.buttons[SDL_BUTTON_X1] = 0;
+
+			cycleTile(&currentTile, -1);
+		}
+
+		if (app.mouse.buttons[SDL_BUTTON_X2])
+		{
+			app.mouse.buttons[SDL_BUTTON_X2] = 0;
+
+			cycleTile(&currentTile, 1);
+		}
 	}
 }
 
@@ -94,15 +117,18 @@ static void doKeyboard(void)
 {
 	if (app.keyboard[SDL_SCANCODE_SPACE])
 	{
-		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "Saving map '%s' ... ", stage.name);
+		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
+			"Saving map '%s' ... ", stage.name);
 
 		if (!saveMap() || !saveEntities())
 		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, "Failed to save map!");
+			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, 
+				"Failed to save map!");
 		}
 		else
 		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, "Saving map '%s' ... Done", stage.name);
+			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
+				"Saving map '%s' ... Done", stage.name);
 		}
 
 		app.keyboard[SDL_SCANCODE_SPACE] = 0;
@@ -123,9 +149,15 @@ static void draw(void)
 
 	drawGridLines(MAP_TILE_SIZE);
 
-	blitAtlasImage(tiles[currentTile], (mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, (mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 0, SDL_FLIP_NONE);
+	blitAtlasImage(tiles[currentTile], 
+		(mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
+		(mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 0, SDL_FLIP_NONE);
 
-	drawOutlineRect((mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, (mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+	drawOutlineRect((mouseTile.x * MAP_TILE_SIZE) - stage.camera.x, 
+		(mouseTile.y * MAP_TILE_SIZE) - stage.camera.y, 
+		MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+
+	drawUI();
 }
 
 static void loadTiles(void)
@@ -139,4 +171,22 @@ static void loadTiles(void)
 
 		tiles[i] = getAtlasImage(filename, 0);
 	}
+}
+
+static void cycleTile(int *i, int dir)
+{
+	do
+	{
+		*i = *i + dir;
+
+		if (*i < 0)
+		{
+			*i = MAX_TILES - 1;
+		}
+
+		if (*i >= MAX_TILES)
+		{
+			*i = 1;
+		}
+	} while (tiles[*i] == NULL);
 }
