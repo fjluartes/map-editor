@@ -56,7 +56,7 @@ void initEditor(void)
 
 	currentTile = 1;
 
-	activeObjectArrowTexture = getAtlasImage("gfx/editor/activeObjectArrow.png");
+	activeObjectArrowTexture = getAtlasImage("gfx/editor/activeObjectArrow.png", 1);
 
 	activeObjectArrowBob = 0;
 
