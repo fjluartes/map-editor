@@ -404,11 +404,31 @@ static void drawTopBar(void)
 
 	drawRect(0, 0, SCREEN_WIDTH, 48, 0, 0, 0, 192);
 
-	sprintf(text, "Pos: %d,%d", mouseTile.x, mouseTile.y);
+	if (mode == MODE_TILES)
+	{
+		sprintf(text, "Pos: %d,%d", mouseTile.x, mouseTile.y);	
+	}
+	else if (currentEntity != NULL)
+	{
+		sprintf(text, "Pos: %d,%d", 
+				(int)currentEntity->x, (int)currentEntity->y);
+	}
+
 	drawText(text, 10, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
 
-	sprintf(text, "Tile type: %s", getTileTypeName());
-	drawText(text, 800, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+	sprintf(text, "Mode, %s", modeText[mode]);
+	drawText(text, 400, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+
+	if (mode == MODE_TILES) 
+	{
+		sprintf(text, "Tile type: %s", getTileTypeName());
+		drawText(text, 800, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+	}
+	else if (currentEntity != NULL)
+	{
+		sprintf(text, "Entity: %s", currentEntity->typeName);
+		drawText(text, 800, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+	}
 
 	sprintf(text, "Map: %s", stage.name);
 	drawText(text, SCREEN_WIDTH - 10, 0, 255, 255, 255, TEXT_ALIGN_RIGHT, 0);
@@ -437,29 +457,56 @@ static void drawBottomBar(void)
 	drawRect(0, SCREEN_HEIGHT - 54, SCREEN_WIDTH,
 			 54, 32, 32, 32, 255);
 
+	x = 0;
+
 	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
 	x2 = x - (MAP_TILE_SIZE + 4);
 
-	i = currentTile;
-	j = currentTile;
-
-	while (x < SCREEN_WIDTH)
+	if (mode == MODE_TILES)
 	{
-		blitAtlasImage(tiles[i], x, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
-		blitAtlasImage(tiles[j], x2, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+		i = currentTile;
+		j = currentTile;
 
-		x += MAP_TILE_SIZE + 4;
-		x2 -= MAP_TILE_SIZE + 4;
+		while (x < SCREEN_WIDTH)
+		{
+			blitAtlasImage(tiles[i], x, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+			blitAtlasImage(tiles[j], x2, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
 
-		cycleTile(&i, 1);
-		cycleTile(&j, -1);
+			x += MAP_TILE_SIZE + 4;
+			x2 -= MAP_TILE_SIZE + 4;
+
+			cycleTile(&i, 1);
+			cycleTile(&j, -1);
+		}
+	}
+	else if (mode == MODE_ENTITIES)
+	{
+		i = currentEntityIndex;
+		j = currentEntityIndex;
+
+		cycleEntity(&j, -1);
+
+		while (x < SCREEN_WIDTH)
+		{
+			blitAtlasImage(entities[i]->texture, x, 
+						   SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+			blitAtlasImage(entities[j]->texture, x2, 
+						   SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+
+			x += MAP_TILE_SIZE + 4;
+			x2 -= MAP_TILE_SIZE + 4;
+
+			cycleEntity(&i, 1);
+			cycleEntity(&j, -1);
+		}
 	}
 
 	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
 
 	drawOutlineRect(x, SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
-		MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+					MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
 
 	blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
-		SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 1, SDL_FLIP_NONE);
+				   SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 
+				   1, SDL_FLIP_NONE);
 }
