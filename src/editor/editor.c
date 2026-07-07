@@ -14,6 +14,7 @@
 #include "../json/cJSON.h"
 #include "../system/atlas.h"
 #include "../system/draw.h"
+#include "../system/text.h"
 #include "editor.h"
 
 extern App   app;
@@ -261,7 +262,7 @@ static void drawBottomBar(void)
 
 	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
 
-	drawOutlineRect(x SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
+	drawOutlineRect(x, SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
 		MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
 
 	blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
