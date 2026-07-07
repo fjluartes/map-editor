@@ -26,6 +26,10 @@ static void draw(void);
 static void doMouse(void);
 static void doKeyboard(void);
 static void cycleTile(int *i, int dir);
+static void drawUI(void);
+static void drawTopBar(void);
+static void drawBottomBar(void);
+static char *getTileTypeName(void);
 
 static SDL_Point   mouseTile;
 static int         currentTile;
@@ -189,4 +193,77 @@ static void cycleTile(int *i, int dir)
 			*i = 1;
 		}
 	} while (tiles[*i] == NULL);
+}
+
+static void drawUI(void)
+{
+	drawTopBar();
+
+	drawBottomBar();
+}
+
+static void drawTopBar(void)
+{
+	char text[MAX_LINE_LENGTH];
+
+	drawRect(0, 0, SCREEN_WIDTH, 48, 0, 0, 0, 192);
+
+	sprintf(text, "Pos: %d,%d", mouseTile.x, mouseTile.y);
+	drawText(text, 10, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+
+	sprintf(text, "Tile type: %s", getTileTypeName());
+	drawText(text, 800, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
+
+	sprintf(text, "Map: %s", stage.name);
+	drawText(text, SCREEN_WIDTH - 10, 0, 255, 255, 255, TEXT_ALIGN_RIGHT, 0);
+}
+
+static char *getTileTypeName(void)
+{
+	if (currentTile >= TILE_WATER)
+	{
+		return "Water";
+	}
+	else if (currentTile >= TILE_FOREGROUND)
+	{
+		return "Foreground";
+	}
+	else
+	{
+		return "Solid";
+	}
+}
+
+static void drawBottomBar(void)
+{
+	int x, x2, i, j;
+
+	drawRect(0, SCREEN_HEIGHT - 54, SCREEN_WIDTH,
+			 54, 32, 32, 32, 255);
+
+	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
+	x2 = x - (MAP_TILE_SIZE + 4);
+
+	i = currentTile;
+	j = currentTile;
+
+	while (x < SCREEN_WIDTH)
+	{
+		blitAtlasImage(tiles[i], x, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+		blitAtlasImage(tiles[j], x2, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
+
+		x += MAP_TILE_SIZE + 4;
+		x2 -= MAP_TILE_SIZE + 4;
+
+		cycleTile(&i, 1);
+		cycleTile(&j, -1);
+	}
+
+	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
+
+	drawOutlineRect(x SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
+		MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+
+	blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
+		SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 1, SDL_FLIP_NONE);
 }
