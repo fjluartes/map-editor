@@ -10,12 +10,12 @@
 - Create build.sh, build.bat
 
 ## MAP EDITOR CONTROLS
-`Left Mouse Button` - Place Tile
-`Right Mouse Button` - Remove Tile
-`Space Bar` - Save Map
+- `Left Mouse Button` - Place Tile
+- `Right Mouse Button` - Remove Tile
+- `Space Bar` - Save Map
 
 ## TODO
-- [ ] Tile selection
+- [x] Tile selection
 - [ ] Entity selection
 - [ ] Scrolling and picking entities
 - [ ] Expanded UI and minimap
