@@ -35,8 +35,8 @@ static char *getTileTypeName(void);
 static SDL_Point   mouseTile;
 static int         currentTile;
 static AtlasImage *tiles[MAX_TILES];
-static SDL_Texture *activeObjectArrowTexture;
-static int activeObjectArrowBob;
+static AtlasImage *activeObjectArrowTexture;
+static double	   activeObjectArrowBob;
 
 void initEditor(void)
 {
