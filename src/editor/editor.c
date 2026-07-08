@@ -15,13 +15,14 @@
 #include "../system/atlas.h"
 #include "../system/draw.h"
 #include "../system/text.h"
+#include "../system/util.h"
 #include "editor.h"
 
 #define ENTITY_SPACING 8
 
 enum
 {
-	MODE_TITLES,
+	MODE_TILES,
 	MODE_ENTITIES
 };
 
@@ -42,7 +43,7 @@ static char *getTileTypeName(void);
 static void addEntity(void);
 static void removeEntity(void);
 static void cycleEntity(int *i, int dir);
-static void *findExisting(char *typeName);
+static Entity *findExisting(char *typeName);
 
 static SDL_Point   mouseTile;
 static int         currentTile;
@@ -50,7 +51,7 @@ static AtlasImage *tiles[MAX_TILES];
 static AtlasImage *activeObjectArrowTexture;
 static double	   activeObjectArrowBob;
 static Entity 	  *currentEntity;
-static Entit 	 **entities;
+static Entity 	 **entities;
 static int         currentEntityIndex;
 static int         totalEntities;
 static int         mode;
@@ -180,7 +181,7 @@ static void doMouse(void)
 			{
 				app.mouse.buttons[SDL_BUTTON_X1] = 0;
 
-				cycleEntity(currentEntityIndex, -1);
+				cycleEntity(&currentEntityIndex, -1);
 
 				currentEntity = entities[currentEntityIndex];
 			}
@@ -189,7 +190,7 @@ static void doMouse(void)
 			{
 				app.mouse.buttons[SDL_BUTTON_X2] = 0;
 
-				cycleEntity(currentEntityIndex, 1);
+				cycleEntity(&currentEntityIndex, 1);
 
 				currentEntity = entities[currentEntityIndex];
 			}
@@ -234,22 +235,22 @@ static void doKeyboard(void)
 		}
 
 		app.keyboard[SDL_SCANCODE_SPACE] = 0;
+	}
 
-		if (app.keyboard[SDL_SCANCODE_1])
-		{
-			app.keyboard[SDL_SCANCODE_1] = 0;
+	if (app.keyboard[SDL_SCANCODE_1])
+	{
+		app.keyboard[SDL_SCANCODE_1] = 0;
 
-			mode = MODE_TILES;
-		}
+		mode = MODE_TILES;
+	}
 
-		if (app.keyboard[SDL_SCANCODE_2])
-		{
-			app.keyboard[SDL_SCANCODE_2] = 0;
+	if (app.keyboard[SDL_SCANCODE_2])
+	{
+		app.keyboard[SDL_SCANCODE_2] = 0;
 
-			mode = MODE_ENTITIES;
+		mode = MODE_ENTITIES;
 
-			currentEntity = entities[currentEntityIndex];
-		}
+		currentEntity = entities[currentEntityIndex];
 	}
 }
 
@@ -351,8 +352,8 @@ static void draw(void)
 	{
 		currentEntity->draw(currentEntity);
 
-		drawOutlineRect(currentEntity.x - stage.camera.x, 
-						currentEntity.y - stage.camera.y, 
+		drawOutlineRect(currentEntity->x - stage.camera.x, 
+						currentEntity->y - stage.camera.y, 
 						currentEntity->w, currentEntity->h, 255, 255, 0, 255);
 	}
 	
