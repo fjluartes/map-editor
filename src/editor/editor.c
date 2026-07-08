@@ -29,21 +29,21 @@ enum
 extern App   app;
 extern Stage stage;
 
-static void loadTiles(void);
-static void addDefaultEntities(void);
-static void logic(void);
-static void draw(void);
-static void doMouse(void);
-static void doKeyboard(void);
-static void cycleTile(int *i, int dir);
-static void drawUI(void);
-static void drawTopBar(void);
-static void drawBottomBar(void);
-static char *getTileTypeName(void);
-static void addEntity(void);
-static void removeEntity(void);
-static void cycleEntity(int *i, int dir);
+static void    loadTiles(void);
+static void    addDefaultEntities(void);
+static void    logic(void);
+static void    draw(void);
+static void    doMouse(void);
+static void    doKeyboard(void);
+static void    cycleTile(int *i, int dir);
+static void    cycleEntity(int *i, int dir);
 static Entity *findExisting(char *typeName);
+static void    addEntity(void);
+static void    removeEntity(void);
+static void    drawUI(void);
+static void    drawTopBar(void);
+static void    drawBottomBar(void);
+static char   *getTileTypeName(void);
 
 static SDL_Point   mouseTile;
 static int         currentTile;
@@ -216,44 +216,6 @@ static void addEntity(void)
 	e->y = currentEntity->y;
 }
 
-static void doKeyboard(void)
-{
-	if (app.keyboard[SDL_SCANCODE_SPACE])
-	{
-		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
-			"Saving map '%s' ... ", stage.name);
-
-		if (!saveMap() || !saveEntities())
-		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, 
-				"Failed to save map!");
-		}
-		else
-		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
-				"Saving map '%s' ... Done", stage.name);
-		}
-
-		app.keyboard[SDL_SCANCODE_SPACE] = 0;
-	}
-
-	if (app.keyboard[SDL_SCANCODE_1])
-	{
-		app.keyboard[SDL_SCANCODE_1] = 0;
-
-		mode = MODE_TILES;
-	}
-
-	if (app.keyboard[SDL_SCANCODE_2])
-	{
-		app.keyboard[SDL_SCANCODE_2] = 0;
-
-		mode = MODE_ENTITIES;
-
-		currentEntity = entities[currentEntityIndex];
-	}
-}
-
 static Entity *findExisting(char *typeName)
 {
 	Entity *e;
@@ -301,6 +263,62 @@ static void removeEntity(void)
 
 		prev = e;
 	}
+}
+
+static void doKeyboard(void)
+{
+	if (app.keyboard[SDL_SCANCODE_SPACE])
+	{
+		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
+			"Saving map '%s' ... ", stage.name);
+
+		if (!saveMap() || !saveEntities())
+		{
+			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, 
+				"Failed to save map!");
+		}
+		else
+		{
+			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
+				"Saving map '%s' ... Done", stage.name);
+		}
+
+		app.keyboard[SDL_SCANCODE_SPACE] = 0;
+	}
+
+	if (app.keyboard[SDL_SCANCODE_1])
+	{
+		app.keyboard[SDL_SCANCODE_1] = 0;
+
+		mode = MODE_TILES;
+	}
+
+	if (app.keyboard[SDL_SCANCODE_2])
+	{
+		app.keyboard[SDL_SCANCODE_2] = 0;
+
+		mode = MODE_ENTITIES;
+
+		currentEntity = entities[currentEntityIndex];
+	}
+}
+
+static void cycleTile(int *i, int dir)
+{
+	do
+	{
+		*i = *i + dir;
+
+		if (*i < 0)
+		{
+			*i = MAX_TILES - 1;
+		}
+
+		if (*i >= MAX_TILES)
+		{
+			*i = 1;
+		}
+	} while (tiles[*i] == NULL);
 }
 
 static void cycleEntity(int *i, int dir)
@@ -359,37 +377,6 @@ static void draw(void)
 	
 
 	drawUI();
-}
-
-static void loadTiles(void)
-{
-	int  i;
-	char filename[MAX_FILENAME_LENGTH];
-
-	for (i = 0; i < MAX_TILES; i++)
-	{
-		sprintf(filename, "gfx/tiles/%d.png", i);
-
-		tiles[i] = getAtlasImage(filename, 0);
-	}
-}
-
-static void cycleTile(int *i, int dir)
-{
-	do
-	{
-		*i = *i + dir;
-
-		if (*i < 0)
-		{
-			*i = MAX_TILES - 1;
-		}
-
-		if (*i >= MAX_TILES)
-		{
-			*i = 1;
-		}
-	} while (tiles[*i] == NULL);
 }
 
 static void drawUI(void)
@@ -510,4 +497,17 @@ static void drawBottomBar(void)
 	blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
 				   SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 
 				   1, SDL_FLIP_NONE);
+}
+
+static void loadTiles(void)
+{
+	int  i;
+	char filename[MAX_FILENAME_LENGTH];
+
+	for (i = 0; i < MAX_TILES; i++)
+	{
+		sprintf(filename, "gfx/tiles/%d.png", i);
+
+		tiles[i] = getAtlasImage(filename, 0);
+	}
 }
