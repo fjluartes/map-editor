@@ -19,11 +19,13 @@
 #include "editor.h"
 
 #define ENTITY_SPACING 8
+#define SCROLL_OVERSCAN (MAP_TILE_SIZE * 8)
 
 enum
 {
 	MODE_TILES,
-	MODE_ENTITIES
+	MODE_ENTITIES,
+	MODE_PICK
 };
 
 extern App   app;
@@ -40,22 +42,24 @@ static void    cycleEntity(int *i, int dir);
 static Entity *findExisting(char *typeName);
 static void    addEntity(void);
 static void    removeEntity(void);
+static void    pickEntity(void);
 static void    drawUI(void);
 static void    drawTopBar(void);
 static void    drawBottomBar(void);
 static char   *getTileTypeName(void);
 
+static double      moveTimer;
 static SDL_Point   mouseTile;
 static int         currentTile;
 static AtlasImage *tiles[MAX_TILES];
 static AtlasImage *activeObjectArrowTexture;
-static double	   activeObjectArrowBob;
-static Entity 	  *currentEntity;
-static Entity 	 **entities;
+static double      activeObjectArrowBob;
+static Entity     *currentEntity;
+static Entity    **entities;
 static int         currentEntityIndex;
 static int         totalEntities;
 static int         mode;
-static char       *modeText[] = {"Tiles", "Entities"};
+static char       *modeText[] = {"Tiles", "Entities", "Pick"};
 
 void initEditor(void)
 {
@@ -72,6 +76,8 @@ void initEditor(void)
 	initMap();
 
 	addDefaultEntities();
+
+	moveTimer = 0;
 
 	currentTile = 1;
 
@@ -123,6 +129,8 @@ static void logic(void)
 		currentEntity->y *= ENTITY_SPACING;
 	}
 
+	moveTimer = MAX(moveTimer - app.deltaTime, 0);
+
 	doMouse();
 
 	doKeyboard();
@@ -172,7 +180,7 @@ static void doMouse(void)
 
 			if (app.mouse.buttons[SDL_BUTTON_RIGHT])
 			{
-				app.mouse.buttons[SDL_BUTTON_RIGHT] = 0;
+				app.mouse.buttons[SDL_BUTTON_LEFT] = 0;
 
 				removeEntity();
 			}
@@ -193,6 +201,22 @@ static void doMouse(void)
 				cycleEntity(&currentEntityIndex, 1);
 
 				currentEntity = entities[currentEntityIndex];
+			}
+		}
+		else
+		{
+			if (app.mouse.buttons[SDL_BUTTON_LEFT])
+			{
+				app.mouse.buttons[SDL_BUTTON_LEFT] = 0;
+
+				if (currentEntity == NULL)
+				{
+					pickEntity();
+				}
+				else
+				{
+					currentEntity = NULL;
+				}
 			}
 		}
 		
@@ -265,8 +289,61 @@ static void removeEntity(void)
 	}
 }
 
+static void pickEntity(void)
+{
+	Entity *e;
+
+	for (e = stage.entityHead.next; e != NULL; e = e->next)
+	{
+		if (collision(app.mouse.x + stage.camera.x,
+					  app.mouse.y + stage.camera.y,
+					  1, 1,
+					  e->x, e->y, e->w, e->h))
+		{
+			currentEntity = e;
+			return;
+		}
+	}
+}
+
 static void doKeyboard(void)
 {
+	int dx, dy;
+
+	if (moveTimer <= 0)
+	{
+		dx = dy = 0;
+
+		if (app.keyboard[SDL_SCANCODE_A])
+		{
+			dx = -MAP_TILE_SIZE;
+		}
+
+		if (app.keyboard[SDL_SCANCODE_D])
+		{
+			dx = MAP_TILE_SIZE;
+		}
+
+		if (app.keyboard[SDL_SCANCODE_W])
+		{
+			dy = -MAP_TILE_SIZE;
+		}
+
+		if (app.keyboard[SDL_SCANCODE_D])
+		{
+			dy = MAP_TILE_SIZE;
+		}
+
+		if (dx != 0 || dy != 0)
+		{
+			stage.camera.x = MIN(MAX(stage.camera.x + dx, -SCROLL_OVERSCAN),
+								 (MAP_WIDTH * MAP_TILE_SIZE) - SCROLL_OVERSCAN);
+			stage.camera.y = MIN(MAX(stage.camera.y + dy, -SCROLL_OVERSCAN),
+								 (MAP_WIDTH * MAP_TILE_SIZE) - SCROLL_OVERSCAN);
+			moveTimer = 3;
+		}
+	}
+
 	if (app.keyboard[SDL_SCANCODE_SPACE])
 	{
 		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
@@ -291,6 +368,8 @@ static void doKeyboard(void)
 		app.keyboard[SDL_SCANCODE_1] = 0;
 
 		mode = MODE_TILES;
+
+		currentEntity = NULL;
 	}
 
 	if (app.keyboard[SDL_SCANCODE_2])
@@ -300,6 +379,15 @@ static void doKeyboard(void)
 		mode = MODE_ENTITIES;
 
 		currentEntity = entities[currentEntityIndex];
+	}
+
+	if (app.keyboard[SDL_SCANCODE_3])
+	{
+		app.keyboard[SDL_SCANCODE_3] = 0;
+
+		mode = MODE_PICK;
+
+		currentEntity = NULL;
 	}
 }
 
@@ -332,7 +420,7 @@ static void cycleEntity(int *i, int dir)
 
 	if (*i >= totalEntities)
 	{
-		*i = 1;
+		*i = 0;
 	}
 }
 
@@ -401,6 +489,10 @@ static void drawTopBar(void)
 		sprintf(text, "Pos: %d,%d", 
 				(int)currentEntity->x, (int)currentEntity->y);
 	}
+	else
+	{
+		sprintf(text, "Pos, -,-");
+	}
 
 	drawText(text, 10, 0, 255, 255, 255, TEXT_ALIGN_LEFT, 0);
 
@@ -455,6 +547,8 @@ static void drawBottomBar(void)
 		i = currentTile;
 		j = currentTile;
 
+		cycleTile(&j, -1);
+
 		while (x < SCREEN_WIDTH)
 		{
 			blitAtlasImage(tiles[i], x, SCREEN_HEIGHT - 50, 0, SDL_FLIP_NONE);
@@ -489,14 +583,17 @@ static void drawBottomBar(void)
 		}
 	}
 
-	x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
+	if (mode != MODE_PICK)
+	{
+		x = (SCREEN_WIDTH - MAP_TILE_SIZE) / 2;
 
-	drawOutlineRect(x, SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
-					MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
+		drawOutlineRect(x, SCREEN_HEIGHT - MAP_TILE_SIZE - 2, 
+						MAP_TILE_SIZE, MAP_TILE_SIZE, 255, 255, 0, 255);
 
-	blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
-				   SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 
-				   1, SDL_FLIP_NONE);
+		blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
+					   SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 
+					   1, SDL_FLIP_NONE);
+	}
 }
 
 static void loadTiles(void)

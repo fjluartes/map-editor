@@ -15,11 +15,11 @@
 - `Space Bar` - Save Map
 
 ## TODO
-- [x] Entity selection
-- [ ] Scrolling and picking entities
+- [x] Scrolling and picking entities
 - [ ] Expanded UI and minimap
 
 ## DONE
+- [x] Entity selection
 - [x] Tile selection
 - [x] Simple map editor
 - [x] Project setup
