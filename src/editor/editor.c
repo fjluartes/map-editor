@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2022 Parallel Realities. All rights reserved.
- * 2026-07-06 fjluartes
+ * 2026-07-09 fjluartes
  */
 
 #include <SDL_mixer.h>
