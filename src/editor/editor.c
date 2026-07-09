@@ -329,7 +329,7 @@ static void doKeyboard(void)
 			dy = -MAP_TILE_SIZE;
 		}
 
-		if (app.keyboard[SDL_SCANCODE_D])
+		if (app.keyboard[SDL_SCANCODE_S])
 		{
 			dy = MAP_TILE_SIZE;
 		}
@@ -339,7 +339,7 @@ static void doKeyboard(void)
 			stage.camera.x = MIN(MAX(stage.camera.x + dx, -SCROLL_OVERSCAN),
 								 (MAP_WIDTH * MAP_TILE_SIZE) - SCROLL_OVERSCAN);
 			stage.camera.y = MIN(MAX(stage.camera.y + dy, -SCROLL_OVERSCAN),
-								 (MAP_WIDTH * MAP_TILE_SIZE) - SCROLL_OVERSCAN);
+								 (MAP_HEIGHT * MAP_TILE_SIZE) - SCROLL_OVERSCAN);
 			moveTimer = 3;
 		}
 	}
