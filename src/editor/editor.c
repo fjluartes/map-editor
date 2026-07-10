@@ -20,6 +20,7 @@
 
 #define ENTITY_SPACING 8
 #define SCROLL_OVERSCAN (MAP_TILE_SIZE * 8)
+#define MINI_MAP_CELL_SIZE 3
 
 enum
 {
@@ -94,6 +95,13 @@ void initEditor(void)
 
 	currentEntity = entities[0];
 
+	miniMapRect.w = MAP_WIDTH * MINI_MAP_CELL_SIZE;
+	miniMapRect.h = MAP_HEIGHT * MINI_MAP_CELL_SIZE;
+	miniMapRect.x = SCREEN_WIDTH - (miniMapRect.w + 10);
+	miniMapRect.y = SCREEN_HEIGHT - (miniMapRect.h + 64);
+
+	showMiniMap = 1;
+
 	activeObjectArrowTexture = getAtlasImage("gfx/editor/activeObjectArrow.png", 1);
 
 	activeObjectArrowBob = 0;
@@ -137,6 +145,8 @@ static void logic(void)
 	}
 
 	moveTimer = MAX(moveTimer - app.deltaTime, 0);
+
+	statusMessageTimer = MAX(statusMessageTimer - app.deltaTime, 0);
 
 	doMouse();
 
@@ -353,18 +363,15 @@ static void doKeyboard(void)
 
 	if (app.keyboard[SDL_SCANCODE_SPACE])
 	{
-		SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
-			"Saving map '%s' ... ", stage.name);
+		setStatusMessage("Saving map '%s' ... ", stage.name);
 
 		if (!saveMap() || !saveEntities())
 		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN, 
-				"Failed to save map!");
+			setStatusMessage("Failed to save map!");
 		}
 		else
 		{
-			SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, 
-				"Saving map '%s' ... Done", stage.name);
+			setStatusMessage("Saving map '%s' ... Done", stage.name);
 		}
 
 		app.keyboard[SDL_SCANCODE_SPACE] = 0;
@@ -395,6 +402,13 @@ static void doKeyboard(void)
 		mode = MODE_PICK;
 
 		currentEntity = NULL;
+	}
+
+	if (app.keyboard[SDL_SCANCODE_0])
+	{
+		app.keyboard[SDL_SCANCODE_0] = 0;
+
+		showMiniMap = !showMiniMap;
 	}
 }
 
@@ -429,6 +443,22 @@ static void cycleEntity(int *i, int dir)
 	{
 		*i = 0;
 	}
+}
+
+static void setStatusMessage(char *fmt, ...)
+{
+	va_list args;
+
+	memset(&statusMessage, '\0', sizeof(statusMessage));
+
+	va_start(args, fmt);
+	vsprintf(statusMessage, fmt, args);
+	va_end(args);
+
+	statusMessageTimer = FPS * 1.5;
+
+	SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, 
+		           SDL_LOG_PRIORITY_INFO, "%s", statusMessage);
 }
 
 static void draw(void)
@@ -479,6 +509,13 @@ static void drawUI(void)
 	drawTopBar();
 
 	drawBottomBar();
+
+	if (showMiniMap)
+	{
+		drawMiniMap();
+	}
+
+	drawStatusMessage();
 }
 
 static void drawTopBar(void)
@@ -600,6 +637,71 @@ static void drawBottomBar(void)
 		blitAtlasImage(activeObjectArrowTexture, x + (MAP_TILE_SIZE / 2), 
 					   SCREEN_HEIGHT - 64 + (sin(activeObjectArrowBob) * 8), 
 					   1, SDL_FLIP_NONE);
+	}
+}
+
+static void drawMiniMap(void)
+{
+	int x, y;
+	Entity *e;
+
+	drawRect(miniMapRect.x, miniMapRect.y, 
+		     miniMapRect.w, miniMapRect.h, 
+		     0, 0, 0, 255);
+
+	for (x = 0; x < MAP_WIDTH, x++)
+	{
+		for (y = 0; y < MAP_HEIGHT; y++)
+		{
+			if (isSolidMap(x, y))
+			{
+				drawRect(miniMapRect.x + x * MINI_MAP_CELL_SIZE,
+					     miniMapRect.y + y * MINI_MAP_CELL_SIZE,
+					     MINI_MAP_CELL_SIZE, MINI_MAP_CELL_SIZE,
+					     96, 96, 96, 255);
+			}
+			else if (isWater(x, y))
+			{
+				drawRect(miniMapRect.x + x * MINI_MAP_CELL_SIZE,
+					     miniMapRect.y + y * MINI_MAP_CELL_SIZE,
+					     MINI_MAP_CELL_SIZE, MINI_MAP_CELL_SIZE,
+					     128, 128, 255, 255);
+			}
+		}
+	}
+
+	for (e = stage.entityHead.next; e != NULL; e = e->next)
+	{
+		x = e->x / MAP_TILE_SIZE;
+		y = e->y / MAP_TILE_SIZE;
+
+		drawRect(miniMapRect.x + x * MINI_MAP_CELL_SIZE,
+					     miniMapRect.y + y * MINI_MAP_CELL_SIZE,
+					     MINI_MAP_CELL_SIZE, MINI_MAP_CELL_SIZE,
+					     255, 255, 0, 255);
+	}
+
+	drawOutlineRect(miniMapRect.x, miniMapRect.y,
+		            miniMapRect.w, miniMapRect.h,
+		            255, 255, 255, 255);
+}
+
+static void drawStatusMessage(void)
+{
+	SDL_Rect r;
+
+	if (statusMessageTimer > 0)
+	{
+		r.w = SCREEN_WIDTH;
+		r.h = 48;
+		r.x = 0;
+		r.y = (SCREEN_HEIGHT - r.h) / 2;
+
+		drawRect(r.x, r.y, r.w, r.h, 128, 128, 255, 192);
+		drawOutlineRect(r.x, r.y, r.w, r.h, 255, 255, 255, 255);
+
+		drawText(statusMessage, SCREEN_WIDTH / 2, r.y,
+			     255, 255, 255, TEXT_ALIGN_CENTER, 0);
 	}
 }
 

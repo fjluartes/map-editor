@@ -15,9 +15,10 @@
 - `Space Bar` - Save Map
 
 ## TODO
-- [x] Expanded UI and minimap
+
 
 ## DONE
+- [x] Expanded UI and minimap
 - [x] Scrolling and picking entities
 - [x] Entity selection
 - [x] Tile selection
