@@ -649,7 +649,7 @@ static void drawMiniMap(void)
 		     miniMapRect.w, miniMapRect.h, 
 		     0, 0, 0, 255);
 
-	for (x = 0; x < MAP_WIDTH, x++)
+	for (x = 0; x < MAP_WIDTH; x++)
 	{
 		for (y = 0; y < MAP_HEIGHT; y++)
 		{
