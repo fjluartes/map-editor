@@ -47,6 +47,9 @@ static void    drawUI(void);
 static void    drawTopBar(void);
 static void    drawBottomBar(void);
 static char   *getTileTypeName(void);
+static void    drawMiniMap(void);
+static void    drawStatusMessage(void);
+static void    setStatusMessage(char *fmt, ...);
 
 static double      moveTimer;
 static SDL_Point   mouseTile;
@@ -60,6 +63,10 @@ static int         currentEntityIndex;
 static int         totalEntities;
 static int         mode;
 static char       *modeText[] = {"Tiles", "Entities", "Pick"};
+static SDL_Rect    miniMapRect;
+static int         showMiniMap;
+static char        statusMessage[MAX_DESCRIPTION_LENGTH];
+static double      statusMessageTimer;
 
 void initEditor(void)
 {
