@@ -5,10 +5,9 @@ Project(
     DESCRIPTION "SDL2 Map Editor"
 )
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 file(GLOB SOURCES
     src/defs.h src/structs.h
@@ -18,7 +17,28 @@ file(GLOB SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# ── Platform linking ──────────────────────────────────────────────────────────
+# ── Compiler warnings ─────────────────────────────────────────────────────────
+if(MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        /W4 /WX
+        /wd4100   # unreferenced parameter
+        /wd4244   # float/int conversion
+        /wd4305   # double to float
+        /wd4996   # unsafe CRT functions
+        /wd4232   # dllimport address (cJSON malloc/free)
+        /wd4267   # size_t to int (cJSON)
+        /wd4018   # signed/unsigned mismatch (main.c)
+        /wd4702   # unreachable code (entityFactory.c)
+    )
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -Wall -Wempty-body -Werror -Warray-bounds -g
+        $<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes -Werror=maybe-uninitialized>
+    )
+endif()
+
+# ── SDL2 Linking ──────────────────────────────────────────────────────────
 if(MSVC)
     set(SDL2_VC_ROOT       "C:/sdl/SDL2-2.32.8-VC")
     set(SDL2_MIXER_VC_ROOT "C:/sdl/SDL2_mixer-2.8.2-VC")
@@ -31,7 +51,6 @@ if(MSVC)
         "${SDL2_IMAGE_VC_ROOT}/include"
         "${SDL2_TTF_VC_ROOT}/include"
     )
-
     target_link_libraries(${PROJECT_NAME} PRIVATE
         "${SDL2_VC_ROOT}/lib/x64/SDL2main.lib"
         "${SDL2_VC_ROOT}/lib/x64/SDL2.lib"
@@ -45,25 +64,10 @@ if(MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
-
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        /W4
-        /WX
-        /wd4100   # unreferenced formal parameter
-        /wd4244   # float/int conversion
-        /wd4305   # double to float
-        /wd4996   # unsafe CRT functions
-        /wd4232   # dllimport address (cJSON malloc/free)
-        /wd4267   # size_t to int (cJSON, text.c)
-        /wd4018   # signed/unsigned mismatch (main.c)
-        /wd4702   # unreachable code (entityFactory.c)
-    )
-
     # cJSON is third-party — give it its own relaxed flags
     set_source_files_properties(src/json/cJSON.c PROPERTIES
         COMPILE_OPTIONS "/W0"  # silence all warnings for this file
     )
-
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${SDL2_VC_ROOT}/lib/x64/SDL2.dll"
@@ -85,7 +89,6 @@ elseif(MINGW)
         "${SDL2_IMAGE_ROOT}/include/SDL2"
         "${SDL2_TTF_ROOT}/include/SDL2"
     )
-
     target_link_libraries(${PROJECT_NAME} PRIVATE
         mingw32
         "${SDL2_ROOT}/lib/libSDL2main.a"
@@ -94,13 +97,7 @@ elseif(MINGW)
         "${SDL2_MIXER_ROOT}/lib/libSDL2_mixer.dll.a"
         "${SDL2_TTF_ROOT}/lib/libSDL2_ttf.dll.a"
     )
-
     target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
-
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        -Wall -Wempty-body -Werror -Warray-bounds -g
-        $<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes -Werror=maybe-uninitialized>
-    )
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -141,7 +138,11 @@ elseif(APPLE)
         -Wall -Wempty-body -Werror -Warray-bounds -g
         $<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes -Werror=uninitialized>
     )
-
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        INSTALL_RPATH "@executable_path;@loader_path"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        MACOSX_RPATH TRUE
+    )
 else()
     # Linux
     find_package(SDL2 REQUIRED)
@@ -162,16 +163,6 @@ else()
         -Wall -Wempty-body -Werror -Warray-bounds -g
         $<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes -Werror=uninitialized>
     )
-endif()
-
-# ── Install / RPATH ───────────────────────────────────────────────────────────
-if(APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        INSTALL_RPATH "@executable_path;@loader_path"
-        BUILD_WITH_INSTALL_RPATH TRUE
-        MACOSX_RPATH TRUE
-    )
-elseif(UNIX)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         INSTALL_RPATH "$ORIGIN"
         BUILD_WITH_INSTALL_RPATH TRUE

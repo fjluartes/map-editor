@@ -16,23 +16,14 @@
     },
     {
       "name": "unix-default",
-      "displayName": "Unix / macOS",
+      "displayName": "Unix / macOS / Linux",
       "binaryDir": "build",
       "generator": "Unix Makefiles"
     }
   ],
   "buildPresets": [
-    {
-      "name": "windows-msvc",
-      "configurePreset": "windows-msvc"
-    },
-    {
-      "name": "windows-mingw",
-      "configurePreset": "windows-mingw"
-    },
-    {
-      "name": "unix-default",
-      "configurePreset": "unix-default"
-    }
+    { "name": "windows-msvc",  "configurePreset": "windows-msvc"  },
+    { "name": "windows-mingw", "configurePreset": "windows-mingw" },
+    { "name": "unix-default",  "configurePreset": "unix-default"  }
   ]
 }
